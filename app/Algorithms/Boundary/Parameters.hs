@@ -68,28 +68,26 @@ minimizeN :: Double
   -> VV.Vector (Point 2 Int)
   -> PlaneGraph s Int PolygonEdgeType PolygonFaceData Rational
   -> Result -> Result
-minimizeN c idx points g acc = go acc 0 idx where
+minimizeN c idx points g acc = fst $ foldl' go (acc, 0) [idx+1..len-1] where
   distMap    = sssp' idx g
   len        = VV.length points
   perim      = perimeter' points
   startPoint = points VV.! idx
-  go acc' distBoundary i = if i == len - 1 then acc' else
-    let prevPoint = points VV.! i
-        curPoint  = points VV.! (i + 1)
-        distBoundary' = distBoundary + dist prevPoint curPoint
-        l = min distBoundary' (perim - distBoundary')
-        r = distInside points distMap $ i + 1
-        update = if 2 * l < c * perim then mempty else Result startPoint curPoint (r/l) in
-      go (acc' <> update) distBoundary' $ i + 1
+  go (acc', distBoundary) i = (acc' <> update, distBoundary') where
+    prevPoint = points VV.! (i - 1)
+    curPoint  = points VV.! i
+    distBoundary' = distBoundary + dist prevPoint curPoint
+    l = min distBoundary' (perim - distBoundary')
+    r = distInside points distMap i
+    update = if 2 * l < c * perim then mempty else Result startPoint curPoint (r/l)
 
 parameter2Full :: Double
   -> VV.Vector (Point 2 Int)
   -> PlaneGraph s Int PolygonEdgeType PolygonFaceData Rational
   -> Result
-parameter2Full c points g = go mempty 0 where
+parameter2Full c points g = foldl' go mempty [0..len-1] where
   len = VV.length points
-  go acc n = if n == len - 1 then acc else
-    go (minimizeN c n points g acc) $ n + 1
+  go acc n = minimizeN c n points g acc
 
 parameter2 :: Double -> [Point 2 Int] -> Result
 parameter2 c points = case parameter1 c points of
