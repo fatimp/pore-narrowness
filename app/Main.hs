@@ -2,27 +2,60 @@
 
 module Main where
 import Data.Result
+import Geometry.Point
 import Algorithms.Boundary.ImageBoundary
 import Algorithms.Boundary.SortBoundary
 import Algorithms.Boundary.Parameters
 import Codec.Picture
-import System.Environment
+import Options.Applicative
 
-processImage :: String -> IO (Either String (String, Result))
-processImage name = do
+data What = Parameter1 | Parameter2
+
+data Options = Options
+  { filename      :: FilePath
+  , what          :: What
+  , paramC        :: Double
+  , writeBoundary :: Maybe String
+  , verbose       :: Bool
+  }
+
+parameter :: What -> Double -> [Point 2 Int] -> Result
+parameter Parameter1 = parameter1
+parameter Parameter2 = parameter2
+
+processImage :: Options -> IO (Either String (String, Result))
+processImage options = do
   img <- readImage name
   pure $ process <$> (extractBoundary img >>= sortBoundary) where
-    process points = param `seq` (name, param) where
-      param = parameter2 0.1 points
+    name  = filename options
+    process points = result `seq` (name, result) where
+      result = Main.parameter (what options) (paramC options) points
 
-reportParameters :: Either String (String, Result) -> IO ()
-reportParameters (Left str) = putStrLn str
-reportParameters (Right (name, res)) = case res of
-  Result _ _ p -> putStrLn $ name ++ ", " ++ show p
+reportParameters :: Bool -> Either String (FilePath, Result) -> IO ()
+reportParameters _         (Left failure) = putStrLn failure
+reportParameters isVerbose (Right (name, res)) =
+  if isVerbose then print res else
+    case res of
+      (Result _ _ p) -> putStrLn $ name ++ ", " ++ show p
+
+parser :: Parser Options
+parser = Options
+  <$> argument str (metavar "FILE")
+  <*> (     flag' Parameter1 (long "p1" <> help "Faster parameter")
+        <|> flag' Parameter2 (long "p2" <> help "Slower parameter"))
+  <*> option auto (long "param"
+                   <> short 'c'
+                   <> value 0
+                   <> metavar "PARAM"
+                   <> help "Parameter c")
+  <*> optional (strOption (long "boundary"
+                           <> metavar "CSV"
+                           <> help "Write boundary to a CSV file"))
+  <*> switch (long "verbose" <> short 'v' <> help "Write additional information")
+
+parseArguments :: IO Options
+parseArguments = execParser $ info (parser <**> helper) mempty
 
 main :: IO ()
-main = do
-  args <- getArgs
-  case args of
-    [nameIn] -> processImage nameIn >>= reportParameters
-    _        -> error "Usage: shit-score image.png"
+main = parseArguments >>= processOptions where
+  processOptions options = processImage options >>= (reportParameters $ verbose options)
