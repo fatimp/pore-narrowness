@@ -70,9 +70,3 @@ delete e tree = go id tree where
                        case Ls.find p (ch node) of
                          Nothing -> tree
                          Just child -> go (lens . children . item child) child
-
--- Tests
---data Point = Point Int Int deriving (Show, Eq)
-
---instance Metric Point where
---  distance (Point x1 y1) (Point x2 y2) = abs (x1 - x2) + abs (y1 - y2)
