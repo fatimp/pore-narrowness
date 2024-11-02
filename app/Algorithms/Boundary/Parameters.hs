@@ -46,6 +46,12 @@ parameter1 c points = go mempty curveDists points where
   curveDists = tail $ scanl' (+) 0 $ pairwiseDist points
 
 -- Parameter #2
+-- Faster perimeter function for vectors
+perimeter' :: VV.Vector (Point 2 Int) -> Double
+perimeter' points = lastPair + foldl' go 0 [1..VV.length points-1] where
+  go acc idx = acc + dist (points VV.! (idx - 1)) (points VV.! idx)
+  lastPair = dist (VV.head points) (VV.last points)
+
 triangles ::
   VV.Vector (Point 2 Int) -> PlaneGraph s Int PolygonEdgeType PolygonFaceData Rational
 triangles = triangulate . unsafeFromVector . VV.map (ext . fmap toRational)
@@ -61,37 +67,36 @@ minimizeN :: Double
   -> Int
   -> VV.Vector (Point 2 Int)
   -> PlaneGraph s Int PolygonEdgeType PolygonFaceData Rational
-  -> Double -> Result -> Result
-minimizeN c idx points g p acc = go acc 0 idx where
+  -> Result -> Result
+minimizeN c idx points g acc = go acc 0 idx where
   distMap    = sssp' idx g
   len        = VV.length points
+  perim      = perimeter' points
   startPoint = points VV.! idx
   go acc' distBoundary i = if i == len - 1 then acc' else
     let prevPoint = points VV.! i
         curPoint  = points VV.! (i + 1)
         distBoundary' = distBoundary + dist prevPoint curPoint
-        l = min distBoundary' (p - distBoundary')
+        l = min distBoundary' (perim - distBoundary')
         r = distInside points distMap $ i + 1
-        update = if 2 * l < c * p then mempty else Result startPoint curPoint (r/l) in
+        update = if 2 * l < c * perim then mempty else Result startPoint curPoint (r/l) in
       go (acc' <> update) distBoundary' $ i + 1
 
 parameter2Full :: Double
   -> VV.Vector (Point 2 Int)
   -> PlaneGraph s Int PolygonEdgeType PolygonFaceData Rational
-  -> Double
   -> Result
-parameter2Full c points g p = go mempty 0 where
+parameter2Full c points g = go mempty 0 where
   len = VV.length points
   go acc n = if n == len - 1 then acc else
-    go (minimizeN c n points g p acc) $ n + 1
+    go (minimizeN c n points g acc) $ n + 1
 
 parameter2 :: Double -> [Point 2 Int] -> Result
 parameter2 c points = case parameter1 c points of
   result@(Result p1 p2 _) -> if directlyVisible then result else
-    parameter2Full c points' g p where
+    parameter2Full c points' g where
     directlyVisible = sssp' p1Idx g V.! p2Idx == p1Idx
     points' = VV.fromList points
     g = triangles points'
-    p = perimeter points
     p1Idx = fromJust $ VV.elemIndex p1 points'
     p2Idx = fromJust $ VV.elemIndex p2 points'
