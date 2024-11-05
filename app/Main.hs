@@ -15,7 +15,7 @@ data Options = Options
   { filename      :: FilePath
   , what          :: What
   , paramC        :: Double
-  , writeBoundary :: Maybe String
+  , boundaryFile  :: Maybe String
   , verbose       :: Bool
   }
 
@@ -23,20 +23,23 @@ parameter :: What -> Double -> [Point 2 Int] -> Result
 parameter Parameter1 = parameter1
 parameter Parameter2 = parameter2
 
-processImage :: Options -> IO (Either String (String, Result))
+maybeWriteBoundary :: Either String [Point 2 Int] -> Maybe String -> IO ()
+maybeWriteBoundary (Right points) (Just name) = writeBoundary name points
+maybeWriteBoundary _ _   = pure ()
+
+processImage :: Options -> IO ()
 processImage options = do
   img <- readImage name
-  pure $ process <$> (extractBoundary img >>= sortBoundary) where
-    name  = filename options
-    process points = result `seq` (name, result) where
-      result = Main.parameter (what options) (paramC options) points
-
-reportParameters :: Bool -> Either String (FilePath, Result) -> IO ()
-reportParameters _         (Left failure) = putStrLn failure
-reportParameters isVerbose (Right (name, res)) =
-  if isVerbose then print res else
-    case res of
-      (Result _ _ p) -> putStrLn $ name ++ ", " ++ show p
+  let boundary = extractBoundary img >>= sortBoundary
+  maybeWriteBoundary boundary $ boundaryFile options
+  case process <$> boundary of
+    Left  failure               -> putStrLn failure
+    Right result@(Result _ _ p) -> if (verbose options)
+      then print result
+      else putStrLn $ name ++ ", " ++ show p
+  where
+    name    = filename options
+    process = Main.parameter (what options) (paramC options)
 
 parser :: Parser Options
 parser = Options
@@ -57,5 +60,4 @@ parseArguments :: IO Options
 parseArguments = execParser $ info (parser <**> helper) mempty
 
 main :: IO ()
-main = parseArguments >>= processOptions where
-  processOptions options = processImage options >>= (reportParameters $ verbose options)
+main = parseArguments >>= processImage
