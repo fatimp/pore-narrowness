@@ -15,13 +15,12 @@ newtype Point2D a = Point2D { getPoint :: Point 2 a } deriving (Eq, Ord, Show)
 
 instance Metric (Point2D Int) where
   distance p1 p2 = getPoint p1 `dist` getPoint p2 where
-    dist (Point2 x1 y1) (Point2 x2 y2) = abs (x1 - x2) `max` abs (y1 - y2)
+    Point2 x1 y1 `dist` Point2 x2 y2 = abs (x1 - x2) `max` abs (y1 - y2)
 
 maybeSortBoundary' :: [Point2D Int] -> Maybe [Point2D Int]
 maybeSortBoundary' [] = error "Called on empty list"
 maybeSortBoundary' whole@(x:xs) = go [x] S.empty (fromList xs) 1 where
   total = length whole
-  go :: [Point2D Int] -> S.Set (Point2D Int) -> BKTree (Point2D Int) -> Int -> Maybe [Point2D Int]
   go [] _ _ _ = error "Never happens"
   go sorted@(sHead:sTail) neighborsSeen unsorted n = if n == total
     then Just sorted

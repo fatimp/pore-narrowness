@@ -26,7 +26,7 @@ boundaryPixels img = filter go indices where
   go (Point2 x y) = isBoundaryPixel img x y
 
 forceGrayscale :: DynamicImage -> Either String (Image Pixel8)
-forceGrayscale (ImageY8 img) = Right img
+forceGrayscale (ImageY8   img) = Right img
 forceGrayscale (ImageRGB8 img) = Right $ pixelMap computeLuma img
 forceGrayscale _ = Left "Not a grayscale 8 bit image"
 
@@ -34,6 +34,5 @@ extractBoundary :: Either String DynamicImage -> Either String [Point 2 Int]
 extractBoundary = (=<<) (\img -> boundaryPixels <$> forceGrayscale img)
 
 writeBoundary :: String -> [Point 2 Int] -> IO ()
-writeBoundary name points = withFile name WriteMode $ \handle -> do
-  forM_ points $ \(Point2 x y) -> do
-    hPutStrLn handle $ show x ++ ", " ++ show y
+writeBoundary name points = withFile name WriteMode $ \handle ->
+  forM_ points $ \(Point2 x y) -> hPutStrLn handle $ show x ++ ", " ++ show y
