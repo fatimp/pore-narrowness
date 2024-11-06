@@ -35,7 +35,7 @@ eigenValues (dX, dY, cov) = (l1, l2) where
 
 elongation :: [Point 2 Int] -> Double
 elongation (eigenValues . covariances . map (fmap fromIntegral) -> (l1, l2)) =
-  if e < 1 then e else recip e where
+  sqrt $ if e < 1 then e else recip e where
     e = abs $ l1 / l2
 
 elongationCoeff :: Double -> Double
