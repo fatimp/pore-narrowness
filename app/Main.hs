@@ -19,7 +19,7 @@ data Options = Options
   , verbose       :: Bool
   }
 
-parameter :: What -> Double -> [Point 2 Int] -> Result
+parameter :: What -> Double -> [Point 2 Int] -> Result Double
 parameter Parameter1 = parameter1
 parameter Parameter2 = parameter2
 

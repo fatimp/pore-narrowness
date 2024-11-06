@@ -29,7 +29,12 @@ perimeter :: [Point 2 Int] -> Double
 perimeter [] = error "List is too short"
 perimeter xs = foldl' (+) 0 (pairwiseDist xs) + dist (head xs) (last xs)
 
-minimizeOnHead :: Double -> Result -> Double -> [Double] -> [Point 2 Int] -> Result
+minimizeOnHead :: Double
+  -> Result Double
+  -> Double
+  -> [Double]
+  -> [Point 2 Int]
+  -> Result Double
 minimizeOnHead _ _ _ _ [] = error "List is too short"
 minimizeOnHead c score p curveDists (pHead:pTail) =
   foldl' go score $ zip pTail curveDists where
@@ -37,7 +42,7 @@ minimizeOnHead c score p curveDists (pHead:pTail) =
       acc <> Result pHead x (dist x pHead / l) where
       l = min cd (p - cd)
       
-parameter1 :: Double -> [Point 2 Int] -> Result
+parameter1 :: Double -> [Point 2 Int] -> Result Double
 parameter1 c points = go mempty curveDists points where
   go acc [] _ = acc
   go acc dists@(dHead:dTail) ps@(_:psTail) =
@@ -67,7 +72,7 @@ minimizeN :: Double
   -> Int
   -> VV.Vector (Point 2 Int)
   -> PlaneGraph s Int PolygonEdgeType PolygonFaceData Rational
-  -> Result -> Result
+  -> Result Double -> Result Double
 minimizeN c idx points g acc = fst $ foldl' go (acc, 0) [idx+1..len-1] where
   distMap    = sssp' idx g
   len        = VV.length points
@@ -84,12 +89,12 @@ minimizeN c idx points g acc = fst $ foldl' go (acc, 0) [idx+1..len-1] where
 parameter2Full :: Double
   -> VV.Vector (Point 2 Int)
   -> PlaneGraph s Int PolygonEdgeType PolygonFaceData Rational
-  -> Result
+  -> Result Double
 parameter2Full c points g = foldl' go mempty [0..len-1] where
   len = VV.length points
   go acc n = minimizeN c n points g acc
 
-parameter2 :: Double -> [Point 2 Int] -> Result
+parameter2 :: Double -> [Point 2 Int] -> Result Double
 parameter2 c points = case parameter1 c points of
   result@(Result p1 p2 _) -> if directlyVisible then result else
     parameter2Full c points' g where
