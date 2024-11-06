@@ -31,9 +31,9 @@ maybeWriteBoundary _ _   = pure ()
 processImage :: Options -> IO ()
 processImage options = do
   img <- readImage name
-  let r = extractPoints img >>= finalProc
-  --maybeWriteBoundary boundary $ boundaryFile options
-  case r of
+  let points = extractPoints img
+  maybeWriteBoundary (snd <$> points) $ boundaryFile options
+  case points >>= uncurry go of
     Left  failure -> putStrLn failure
     Right result  -> if (verbose options)
       then print result
@@ -41,8 +41,8 @@ processImage options = do
   where
     name    = filename options
     process = Main.parameter (what options) (paramC options)
-    finalProc (boundary, blob) = multiplyByCoeff <$> process <$> sortBoundary boundary where
-      multiplyByCoeff = fmap $ (*) $ elongationCoeff $ elongation blob
+    multiplyByCoeff = fmap . (*) . elongationCoeff . elongation
+    go boundary blob = multiplyByCoeff blob <$> process <$> sortBoundary boundary
 
 parser :: Parser Options
 parser = Options
