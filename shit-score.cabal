@@ -65,6 +65,7 @@ executable shit-score
     other-modules: Algorithms.Boundary.ImageBoundary,
                    Algorithms.Boundary.SortBoundary,
                    Algorithms.Boundary.Parameters,
+                   Algorithms.Elongation,
                    Data.BKTree, Data.Result
 
     -- LANGUAGE extensions used by modules in this package.
