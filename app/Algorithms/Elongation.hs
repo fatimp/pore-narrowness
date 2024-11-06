@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE BangPatterns #-}
 
 module Algorithms.Elongation (elongation, elongationCoeff) where
 import Data.List
@@ -20,8 +21,7 @@ subtractMean points = map subMean points where
 
 covariances :: [Point 2 Double] -> (Double, Double, Double)
 covariances = foldl' sumCovariances (0, 0, 0) . subtractMean where
-  sumCovariances (dX, dY, cov) (Point2 x y) =
-    dX' `seq` dY' `seq` cov' `seq` (dX', dY', cov') where
+  sumCovariances (!dX, !dY, !cov) (Point2 x y) = (dX', dY', cov') where
     dX'  = dX  + sqr x
     dY'  = dY  + sqr y
     cov' = cov + x*y
