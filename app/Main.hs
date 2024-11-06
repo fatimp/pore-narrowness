@@ -1,11 +1,12 @@
 {-# LANGUAGE DataKinds #-}
 
 module Main where
-import Data.Result
+import Data.Result as R
 import Geometry.Point
 import Algorithms.Boundary.ImageBoundary
 import Algorithms.Boundary.SortBoundary
 import Algorithms.Boundary.Parameters
+import Algorithms.Elongation
 import Codec.Picture
 import Options.Applicative
 
@@ -24,22 +25,24 @@ parameter Parameter1 = parameter1
 parameter Parameter2 = parameter2
 
 maybeWriteBoundary :: Either String [Point 2 Int] -> Maybe String -> IO ()
-maybeWriteBoundary (Right points) (Just name) = writeBoundary name points
+maybeWriteBoundary (Right points) (Just name) = writePoints name points
 maybeWriteBoundary _ _   = pure ()
 
 processImage :: Options -> IO ()
 processImage options = do
   img <- readImage name
-  let boundary = extractBoundary img >>= sortBoundary
-  maybeWriteBoundary boundary $ boundaryFile options
-  case process <$> boundary of
-    Left  failure               -> putStrLn failure
-    Right result@(Result _ _ p) -> if (verbose options)
+  let r = extractPoints img >>= finalProc
+  --maybeWriteBoundary boundary $ boundaryFile options
+  case r of
+    Left  failure -> putStrLn failure
+    Right result  -> if (verbose options)
       then print result
-      else putStrLn $ name ++ ", " ++ show p
+      else putStrLn $ name ++ ", " ++ show (R.parameter result)
   where
     name    = filename options
     process = Main.parameter (what options) (paramC options)
+    finalProc (boundary, blob) = multiplyByCoeff <$> process <$> sortBoundary boundary where
+      multiplyByCoeff = fmap $ (*) $ elongationCoeff $ elongation blob
 
 parser :: Parser Options
 parser = Options
