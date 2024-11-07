@@ -79,7 +79,8 @@ executable shit-score
                       vector ^>= 0.13.0,
                       containers ^>= 0.6,
                       lens ^>= 5.3,
-                      optparse-applicative ^>= 0.18
+                      optparse-applicative ^>= 0.18,
+                      filepath ^>= 1.5
 
     -- Directories containing source files.
     hs-source-dirs:   app

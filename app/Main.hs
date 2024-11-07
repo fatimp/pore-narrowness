@@ -9,6 +9,7 @@ import Algorithms.Boundary.Parameters
 import Algorithms.Elongation
 import Codec.Picture
 import Options.Applicative
+import System.FilePath
 
 data What = Parameter1 | Parameter2
 
@@ -20,6 +21,10 @@ data Options = Options
   , verbose       :: Bool
   }
 
+-- FIXME: Do not allow lossy formats. Can it be better?
+isLossy :: FilePath -> Bool
+isLossy = flip elem [".jpg", ".jpeg"] . takeExtension
+
 parameter :: What -> Double -> [Point 2 Int] -> Result Double
 parameter Parameter1 = parameter1
 parameter Parameter2 = parameter2
@@ -29,7 +34,8 @@ maybeWriteBoundary (Right points) (Just name) = writePoints name points
 maybeWriteBoundary _ _   = pure ()
 
 processImage :: Options -> IO ()
-processImage options = do
+processImage options = if isLossy name then
+  putStrLn "Do not use lossy formats!" else do
   img <- readImage name
   let points = extractPoints img
   maybeWriteBoundary (snd <$> points) $ boundaryFile options
