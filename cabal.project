@@ -1,0 +1,9 @@
+profiling: False
+
+optimization: 2
+
+packages:
+        hgeometry/hgeometry
+        hgeometry/hgeometry-combinatorial
+        pore-narrowness
+        vector-circular
