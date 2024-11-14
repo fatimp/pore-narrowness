@@ -1,3 +1,6 @@
 [submodule "vector-circular"]
 	path = vector-circular
 	url = https://github.com/chessai/vector-circular
+[submodule "hgeometry"]
+	path = hgeometry
+	url = https://github.com/fatimp/hgeometry
