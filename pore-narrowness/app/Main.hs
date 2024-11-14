@@ -11,7 +11,7 @@ import Codec.Picture
 import Options.Applicative
 import System.FilePath
 
-data What = Parameter1 | Parameter2
+data What = ParameterSimplified | ParameterFull
 
 data Options = Options
   { filename      :: FilePath
@@ -26,8 +26,8 @@ isLossy :: FilePath -> Bool
 isLossy = flip elem [".jpg", ".jpeg"] . takeExtension
 
 parameter :: What -> Double -> [Point 2 Int] -> Result Double
-parameter Parameter1 = parameter1
-parameter Parameter2 = parameter2
+parameter ParameterSimplified = parameterSimplified
+parameter ParameterFull       = parameterFull
 
 maybeWriteBoundary :: Either String [Point 2 Int] -> Maybe String -> IO ()
 maybeWriteBoundary (Right points) (Just name) = writePoints name points
@@ -53,8 +53,10 @@ processImage options = if isLossy name then
 parser :: Parser Options
 parser = Options
   <$> argument str (metavar "FILE")
-  <*> (     flag' Parameter1 (long "p1" <> help "Faster parameter")
-        <|> flag' Parameter2 (long "p2" <> help "Slower parameter"))
+  <*> (     flag' ParameterSimplified (long "simplified"
+                                       <> help "Faster parameter")
+        <|> flag' ParameterFull       (long "full"
+                                       <> help "More informative parameter"))
   <*> option auto (long "param"
                    <> short 'c'
                    <> value 0
