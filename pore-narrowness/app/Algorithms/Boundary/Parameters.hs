@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE BangPatterns #-}
 
 module Algorithms.Boundary.Parameters (
   parameter1,
@@ -38,15 +39,15 @@ minimizeOnHead :: Double
 minimizeOnHead _ _ _ _ [] = error "List is too short"
 minimizeOnHead c score p curveDists (pHead:pTail) =
   foldl' go score $ zip pTail curveDists where
-    go acc (x, cd) = if 2 * l < c * p then acc else
+    go acc (!x, !cd) = if 2 * l < c * p then acc else
       acc <> Result pHead x (dist x pHead / l) where
       l = min cd (p - cd)
-      
+
 parameter1 :: Double -> [Point 2 Int] -> Result Double
-parameter1 c points = go mempty curveDists points where
-  go acc [] _ = acc
-  go acc dists@(dHead:dTail) ps@(_:psTail) =
-    go (minimizeOnHead c acc p dists ps) (map (subtract dHead) dTail) psTail
+parameter1 c points = fst $ foldl' go (mempty, curveDists) $ tails points where
+  go (!acc, []) _                    = (acc, [])
+  go (!acc, !dists@(dHead:dTail)) ps =
+    (minimizeOnHead c acc p dists ps, map (subtract dHead) dTail)
   p = perimeter points
   curveDists = tail $ scanl' (+) 0 $ pairwiseDist points
 
