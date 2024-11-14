@@ -1,0 +1,3 @@
+[submodule "vector-circular"]
+	path = vector-circular
+	url = https://github.com/chessai/vector-circular
